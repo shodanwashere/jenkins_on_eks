@@ -42,3 +42,11 @@ To destroy the infrastructure:
 ```
 $ terraform destroy
 ```
+
+## Forewarning
+
+By default, this repo ships with a `.gitignore` which makes git ignore all `.tfvars` files. **You should keep it like this**. If you leak things like access and secret keys, cluster and namespace names, worker node hostnames, and anything else by uploading it to your repo, your infrastructure is prone to suffer harm.
+
+Thankfully, AWS has counter-measures against Access Key and Secret Key leaking, and will lock down an account if it detects any of its keys have been made public on a repository.
+
+Beware that this does not apply to worker node hostnames, cluster names or namespace names. **Take care of your infra like it's your own fucking child.** That was my PSA. Thank you for reading this.
