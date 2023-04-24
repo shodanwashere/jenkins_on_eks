@@ -21,9 +21,22 @@ You should create a `terraform.tfvars` file before you move on. Here are the var
 ```
 aws_access_key="Your AWS access key ID"
 aws_secret_key="Your AWS secret access key"
+aws_region    ="Your AWS region"
 cluster_name="The name of the cluster you want to deploy Jenkins in"
 jenkins_namespace="The name of the namespace you want to create for Jenkins"
 node_affinity_worker_hostname="The hostname of the worker node Jenkins should run on"
+hosted_zone="name of the hosted zone domain you will host jenkins on"
+private_zone=true|false # is the hosted zone private?
+jenkins_vpc_id="id of the VPC Jenkins will be located inside of"
+lb_arn="load balancer ARN"
+lb_name="load balancer name"
+lb_listener_arn="ARN of the load balancer listener"
+tg_name="name of the target group that will be created"
+tg_port=443 #port used for the new target group
+tg_protocol="internal target group protocol"
+worker_tag="value of the Name tag on the workers you want to use for the target group"
+host_header_rule=["hh1.com","hh2.com",...] # List of host headers to which the load balancer listener rule should apply
+subdomain="jenkins subdomain name"
 ```
 
 ## Usage

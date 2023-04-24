@@ -2,6 +2,8 @@
 #   Terraform -> Jenkins on EKS
 #   By: Nuno Dias @ CELFOCUS AppSec
 #
+#   
+#
 #   Written using the following docs:
 #   - https://www.jenkins.io/doc/book/installing/kubernetes/
 #   - https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs
@@ -24,7 +26,7 @@ terraform {
 
 provider "aws" {
     # TODO: Config options for the specific AWS account
-    region = "eu-central-1"
+    region = var.aws_region
     access_key = var.aws_access_key
     secret_key = var.aws_secret_key
     # Use variables file that is included in a .gitignore #
@@ -36,6 +38,85 @@ data "aws_eks_cluster" "cluster" {
 
 data "aws_eks_cluster_auth" "eks_auth" {
     name = var.cluster_name
+}
+
+data "aws_route53_zone" "zone" {
+    name = var.hosted_zone
+    private_zone = var.private_zone
+}
+
+data "aws_lb" "load_balancer" {
+    arn = var.lb_arn
+    name = var.lb_name
+}
+
+data "aws_lb_listener" "https443"{
+    arn = var.lb_listener_arn
+}
+
+data "aws_vpc" "jenkins_vpc" {
+    id = var.jenkins_vpc_id
+}
+
+resource "aws_lb_target_group" "jenkins_tg"{
+    name = var.tg_name
+    port = var.tg_port
+    protocol = var.tg_protocol
+    target_type = "instance"
+    vpc_id = data.aws_vpc.jenkins_vpc.id
+}
+
+data "aws_instances" "workers" {
+    instance_tags = {
+        Name = var.worker_tag
+    }
+
+    instance_state_names = ["running"]
+}
+
+data "aws_instance" "worker_instances" {
+    count = length(data.aws_instances.workers.ids)
+    instance_id = data.aws_instances.workers.ids[count.index]
+}
+
+resource "aws_lb_target_group_attachment" "tg_attachs" {
+    count = length(data.aws_instances.workers.ids)
+    target_group_arn = aws_lb_target_group.jenkins_tg.arn
+    target_id = data.aws_instances.workers.ids[count.index]
+    port = 32000
+}
+
+resource "aws_lb_listener_rule" "jenkins_elb_rule" {
+    listener_arn = data.aws_lb_listener.https443.arn
+
+    condition {
+        host_header {
+            values = var.host_header_rule
+        }
+    }
+
+    condition {
+        path_pattern {
+            values = ["/*"]
+        }
+    }
+
+    action {
+        type = "forward"
+        target_group_arn = aws_lb_target_group.jenkins_tg.arn
+    }
+}
+
+resource "aws_route53_record" "jenkins_record" {
+    zone_id = data.aws_route53_zone.zone.zone_id
+    name    = "${var.subdomain}.${data.aws_route53_zone.zone.name}"
+    type    = "A"
+
+    alias {
+        name    = data.aws_lb.load_balancer.dns_name
+        zone_id = data.aws_lb.load_balancer.zone_id
+        evaluate_target_health = true
+    }
 }
 
 provider "kubernetes" {
@@ -133,7 +214,7 @@ resource "kubernetes_persistent_volume_v1" "jenkins_pv" {
                     match_expressions {
                         key = "kubernetes.io/hostname"
                         operator = "In"
-                        values = [var.node_affinity_worker_hostname]
+                        values = [ for w in data.aws_instance.worker_instances : w.private_dns ]
                     }
                 }
             }
