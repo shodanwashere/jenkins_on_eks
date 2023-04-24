@@ -41,6 +41,11 @@ subdomain="jenkins subdomain name"
 
 ## Usage
 
+Start your module like this:
+```
+$ terraform init
+```
+
 To check what changes will happen (and see if you configured your variables correctly):
 ```
 $ terraform plan
