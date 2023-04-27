@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Jenkins on EKS
 This is a module that deploys Jenkins to an EKS cluster, without using Helm. It is completely based on the Jenkins [Kubernetes Deployment docs](https://www.jenkins.io/doc/book/installing/kubernetes/).
 
@@ -135,4 +134,3 @@ By default, this repo ships with a `.gitignore` which makes git ignore all `.tfv
 Thankfully, AWS has counter-measures against Access Key and Secret Key leaking, and will lock down an account if it detects any of its keys have been made public on a repository.
 
 Beware that this does not apply to worker node hostnames, cluster names or namespace names. **Take care of your infra like it's your own fucking child.** That was my PSA. Thank you for reading this.
->>>>>>> b0771aa2e4e8edbb8a010378eb71ef0c42890faf
